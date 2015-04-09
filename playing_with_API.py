@@ -81,3 +81,44 @@ Choice.objects.filter(question__pub_date__year=current_year)
 # Let's delete one of the choices. Use delete() for that.
 c = q.choice_set.filter(choice_text__startswith='Just hacking')
 c.delete()
+
+import datetime
+from django.utils import timezone
+from polls.models import Question
+# create a Question instance with pub_date 30 days in the future
+future_question = Question(pub_date=timezone.now() + datetime.timedelta(days=30))
+# was it published recently?
+future_question.was_published_recently()
+
+
+from django.test.utils import setup_test_environment
+setup_test_environment()
+
+from django.test import Client
+# create an instance of the client for our use
+client = Client()
+
+# get a response from '/'
+response = client.get('/')
+# we should expect a 404 from that address
+print(response.status_code)
+# on the other hand we should expect to find something at '/polls/'
+# we'll use 'reverse()' rather than a hardcoded URL
+from django.core.urlresolvers import reverse
+response = client.get(reverse('polls:index'))
+print(response.status_code)
+print(response.content)
+# note - you might get unexpected results if your ``TIME_ZONE``
+# in ``settings.py`` is not correct. If you need to change it,
+# you will also need to restart your shell session
+from polls.models import Question
+from django.utils import timezone
+# create a Question and save it
+q = Question(question_text="Who is your favorite Beatle?", pub_date=timezone.now())
+q.save()
+# check the response once again
+response = client.get('/polls/')
+print(response.content)
+# If the following doesn't work, you probably omitted the call to
+# setup_test_environment() described above
+print(response.context['latest_question_list'])
